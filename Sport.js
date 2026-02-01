@@ -2,30 +2,26 @@
     'use strict';
 
     /**
-     * Sports Menu Item
-     * Адаптовано для додавання одного пункту "Спортивні" в бічне меню
-     * Базується на логіці STUDIOS MASTER (Syvyj)
+     * Sports Category (Keyword-based, бо жанру Sport в TMDB немає)
+     * Адаптовано під STUDIOS MASTER логіку
      */
 
     var SPORTS_CONFIG = {
         title: 'Спортивні',
-        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93V17.93zm2-13.86c3.94.49 7 3.85 7 7.93s-3.05 7.44-7 7.93V4.07z"/></svg>', // проста іконка м'яча/спорту
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 2 L14 8 L21 9 L16 14 L17 21 L12 18 L7 21 L8 14 L3 9 L10 8 Z"/></svg>', // іконка м'яча
         component: 'sports_category',
-        // параметри для discover-запиту
-        url: 'discover/movie', // або 'discover/tv' або 'discover/all'
+        url: 'discover/movie', // або 'discover/tv' / 'discover/all' — спробуй різні
         params: {
-            with_genres: '99',                    // 99 = Documentary, бо спорт часто там
-            with_keywords: '150904, 725',         // 150904 = sports, 725 = sport (TMDB keywords)
+            with_keywords: '6075|333328|209476|192345|161643|725', // sports, sport, boxing, football (soccer) team, sport competition, athletic
             sort_by: 'popularity.desc',
-            vote_count: { gte: 10 },              // щоб не було зовсім пустого
-            'primary_release_date.lte': '{current_date}'
+            vote_count: { gte: 5 },
+            vote_average: { gte: 5.5 },
+            'primary_release_date.lte': '{current_date}',
+            include_adult: false
         }
     };
 
-    // -----------------------------------------------------------------
-    // Компонент для перегляду (якщо потрібно відкривати список)
-    // -----------------------------------------------------------------
-
+    // Компонент для відображення списку
     function SportsCategory(object) {
         var comp = new Lampa.InteractionCategory(object);
         var network = new Lampa.Reguest();
@@ -51,8 +47,14 @@
         comp.create = function () {
             var _this = this;
             network.silent(buildUrl(1), function (json) {
+                if (json && json.results && json.results.length === 0) {
+                    console.warn('[Sports] Порожній результат — можливо, спробуйте discover/tv або all');
+                }
                 _this.build(json);
-            }, this.empty.bind(this));
+            }, function (err) {
+                console.error('[Sports] Помилка запиту:', err);
+                _this.empty();
+            });
         };
 
         comp.nextPageReuest = function (obj, resolve, reject) {
@@ -62,15 +64,11 @@
         return comp;
     }
 
-    // -----------------------------------------------------------------
-    // Додавання кнопки в меню
-    // -----------------------------------------------------------------
-
+    // Додавання кнопки в меню (та сама логіка, що в STUDIOS MASTER)
     function addSportsMenuButton() {
         var menu = $('.menu .menu__list').eq(0);
         if (!menu.length) return;
 
-        // Уникаємо дублювання
         if (menu.find('.menu__item[data-action="sports_action"]').length) return;
 
         var btn = $(
@@ -91,21 +89,16 @@
         });
 
         menu.append(btn);
-        console.log('[Sports Menu] Пункт "Спортивні" додано в меню');
+        console.log('[Sports Menu] Пункт "Спортивні" додано');
     }
 
-    // -----------------------------------------------------------------
-    // Запуск плагіна
-    // -----------------------------------------------------------------
-
+    // Запуск
     function startPlugin() {
-        if (window.plugin_sports_menu_ready) return;
-        window.plugin_sports_menu_ready = true;
+        if (window.plugin_sports_fixed_ready) return;
+        window.plugin_sports_fixed_ready = true;
 
-        // Реєструємо компонент
         Lampa.Component.add('sports_category', SportsCategory);
 
-        // Додаємо кнопку
         function tryAdd() {
             if (window.appready && $('.menu .menu__list').eq(0).length) {
                 addSportsMenuButton();
@@ -120,9 +113,8 @@
             });
         }
 
-        // Повторна перевірка (на випадок динамічного меню)
         setInterval(tryAdd, 3000);
     }
 
-     startPlugin();
+    s tartPlugin();
 })();

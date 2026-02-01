@@ -44,9 +44,8 @@
         '.' + CLASS_QUALITY + ' .seeds_info    { margin-left:3px; font-size:0.8em; opacity:0.8; font-weight:normal; color:#fff; }'
     ].join('\n');
     document.head.appendChild(style);
-}
 
-     // parseQualityFromText та getQualityStyle — без змін (встав сюди свої функції)
+    //parseQualityFromText та getQualityStyle
     function parseQualityFromText(text) {
         if (!text) return 0;
         var t = text.toLowerCase();
@@ -71,8 +70,8 @@
         return { text: '??', css: 'q_sd_text' };
     }
 
-    // fetchWithProxy — встав сюди свою функцію (без змін)
-function fetchWithProxy(url, callback) {
+    // fetchWithProxy
+    function fetchWithProxy(url, callback) {
         var currentProxy = 0;
         var called = false;
 
@@ -97,8 +96,9 @@ function fetchWithProxy(url, callback) {
         fetch(url).then(function(r) { return r.text(); }).then(function(d) {
             if (!called) { called = true; callback(null, d); }
         }).catch(function() { tryNext(); });
-}
-    // searchUaDual — встав сюди свою функцію (без змін)
+    }
+
+    // searchUaDual
     function searchUaDual(card, callback) {
         var year = (card.release_date || '').substring(0, 4);
         var title = card.original_title || card.title;
@@ -127,9 +127,7 @@ function fetchWithProxy(url, callback) {
                 });
 
                 if (uaList.length > 0) {
-                    // Знаходимо найкращу якість
                     var bestQual = uaList.slice().sort(function(a,b){ return b.val - a.val; })[0];
-                    // Знаходимо за сидами
                     var mostPop = uaList.slice().sort(function(a,b){ return b.seeds - a.seeds; })[0];
 
                     callback({ best: bestQual, popular: mostPop, hasUa: true });

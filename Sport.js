@@ -1,66 +1,63 @@
 (function () {
     'use strict';
 
-    console.log('[Sports Collection] Плагін завантажено');
+    console.log('[Sports Menu] Плагін завантажено');
 
     const waitForLampa = setInterval(() => {
-        if (window.Lampa && Lampa.Component && Lampa.Manifest && Lampa.Utils) {
+        if (window.Lampa && Lampa.Listener && Lampa.Activity && Lampa.Template && typeof $ !== 'undefined') {
             clearInterval(waitForLampa);
             initialize();
         }
     }, 300);
 
     function initialize() {
-        console.log('[Sports Collection] Lampa ініціалізовано');
+        console.log('[Sports Menu] Lampa знайдено, ініціалізація меню');
 
-        // ──────────────── Налаштування ────────────────
-        const COLLECTION_TITLE = 'Спортивні фільми';
-        const COLLECTION_ID    = 'sports_movies_custom';
-        const GENRES_TO_MATCH  = ['спорт', 'sport', 'sports', 'спортивний', 'бокс', 'футбол', 'хокей', 'теніс', 'біатлон', 'олімпійські ігри'];
+        // Слухаємо подію ініціалізації головного меню
+        Lampa.Listener.follow('menu', function (e) {
+            // Перевіряємо, що це ініціалізація основного меню
+            if (e.type === 'init' && e.component === 'main') {
+                // Знаходимо блок "Каталог" або основний список меню
+                // В різних версіях Lampa це може бути .menu__list або .menu__catalog
+                let menu_container = $('.menu__list', e.object.render());
+                if (!menu_container.length) {
+                    menu_container = $('.menu__catalog', e.object.render());
+                }
+                if (!menu_container.length) {
+                    menu_container = $('.menu__body', e.object.render()); // запасний варіант
+                }
 
-        // ──────────────── Функція фільтрації ────────────────
-        function isSports(movie) {
-            if (!movie) return false;
+                // Перевіряємо, чи вже не додано наш пункт (щоб не дублювався)
+                if (menu_container.length && !$('#sports_custom_item').length) {
+                    const sports_menu_item = $(
+                        '<div class="menu__item selector" id="sports_custom_item">' +
+                            '<div class="menu__icon"></div>' +  // іконка (можна замінити на ⚽ або іншу з font Lampa)
+                            '<div class="menu__name">Спортивні</div>' +
+                        '</div>'
+                    );
 
-            const genres = (movie.genres || '').toLowerCase();
-            const title  = (movie.title || movie.name || '').toLowerCase();
-            const orig   = (movie.original_title || movie.original_name || '').toLowerCase();
+                    // При кліку відкриваємо кастомну активність з фільтром
+                    sports_menu_item.on('hover:enter', function () {
+                        Lampa.Activity.push({
+                            component: 'category',
+                            category:  'sports_custom',
+                            title:     'Спортивні фільми та серіали',
+                            url:       'catalog/sports',
+                            // Фільтр по жанрах (працює в багатьох джерелах: cub, tmdb тощо)
+                            genres:    'sport,sports,спорт,спортивний',
+                            // Додаткові параметри, якщо потрібно
+                            types:     'movie,serial',
+                            page:      1
+                        });
+                    });
 
-            // Перевіряємо жанр
-            if (GENRES_TO_MATCH.some(g => genres.includes(g))) return true;
+                    // Додаємо в кінець списку або після певного пункту
+                    menu_container.append(sports_menu_item);
 
-            // Додатково перевіряємо назву (якщо жанр не вказано)
-            if (GENRES_TO_MATCH.some(g => title.includes(g) || orig.includes(g))) return true;
-
-            return false;
-        }
-
-        // ──────────────── Створюємо колекцію ────────────────
-        Lampa.Collections.add({
-            id: COLLECTION_ID,
-            title: COLLECTION_TITLE,
-            icon: '',           // іконка (можна змінити)
-            background: '#1e3a8a', // колір фону картки
-            type: 'movie',         // або 'all', якщо хочеш і серіали
-            loader: function (page, resolve, reject) {
-                // Тут можна підтягнути з Cub або TMDB, але для простоти — фільтруємо популярне
-                Lampa.Api.query(
-                    'popular',
-                    { page: page, types: 'movie' },
-                    (json) => {
-                        if (json && json.results) {
-                            const filtered = json.results.filter(isSports);
-                            resolve({ results: filtered, total: filtered.length });
-                        } else {
-                            reject('Немає даних');
-                        }
-                    },
-                    (error) => reject(error)
-                );
+                    console.log('[Sports Menu] Пункт "Спортивні" додано в меню');
+                }
             }
         });
-
-        console.log('[Sports Collection] Колекція "' + COLLECTION_TITLE + '" додана');
     }
 
 })();

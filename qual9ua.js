@@ -1,15 +1,13 @@
 (function () {
     'use strict';
 
-    // ────────────────────────────────────────────────
-    //  ЗМІНИ ДЛЯ УСУНЕННЯ КОНФЛІКТУ З ІНШИМИ ЯКІСНИМИ МОДАМИ
-    // ────────────────────────────────────────────────
-    const PLUGIN_NAMESPACE     = 'qual9ua';                    // унікальний простір імен
-    const CLASS_QUALITY        = 'qual9ua_quality';            // інший клас замість surs_quality
-    const GLOBAL_FLAG_NAME     = 'qual9ua_UA_Quality_Active';  // інший прапорець
-    const LOG_PREFIX           = "[qual9ua_UA]";
+    // ЗМІНИ ДЛЯ УСУНЕННЯ КОНФЛІКТУ
+    const PLUGIN_NAMESPACE = 'qual9ua';
+    const CLASS_QUALITY    = 'qual9ua_quality';
+    const GLOBAL_FLAG_NAME = 'qual9ua_UA_Quality_Active';
+    const LOG_PREFIX       = "[qual9ua_UA]";
 
-    // Polyfills (залишаємо без змін)
+    // Polyfills
     if (typeof AbortController === 'undefined') {
         window.AbortController = function () {
             this.signal = { aborted: false, addEventListener: function(e, cb) { if (e==='abort') this._onabort=cb; } };
@@ -20,9 +18,7 @@
         window.performance = { now: function () { return new Date().getTime(); } };
     }
 
-    // ────────────────────────────────────────────────
-    //  CONFIG & LOG
-    // ────────────────────────────────────────────────
+    // CONFIG & LOG
     var ENABLE_LOGGING = true;
 
     var SURS_QUALITY = {
@@ -31,24 +27,14 @@
         }
     };
 
-    // Іконки (залишаємо)
+    // Іконки
     var UA_FLAG_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="width:1.3em;height:1.3em;vertical-align:middle;margin-right:4px;"><path d="M31,8c0-2.209-1.791-4-4-4H5c-2.209,0-4,1.791-4,4v9H31V8Z" fill="#2455b2"/><path d="M5,28H27c2.209,0,4-1.791,4-4v-8H1v8c0,2.209,1.791,4,4,4Z" fill="#f9da49"/></svg>';
     var GREEN_ARROW = '<span style="margin:0 4px;color:#2ecc71;font-size:1.1em;vertical-align:middle;">⬆️</span>';
 
-    // ────────────────────────────────────────────────
-    //  СТИЛІ — змінено клас .surs_quality → .qual9ua_quality
-    // ────────────────────────────────────────────────
+    // СТИЛІ
     var style = document.createElement('style');
     style.textContent = [
-        '.full-start__status.' + CLASS_QUALITY + ' {',
-        '    padding: 0.1em 0.3em;',
-        '    font-weight: bold;',
-        '    margin-left: 0.8em;',
-        '    display: inline-flex;',
-        '    align-items: center;',
-        '    background: transparent !important;',
-        '    text-shadow: none !important;',
-        '}',
+        '.full-start__status.' + CLASS_QUALITY + ' { padding: 0.1em 0.3em; font-weight: bold; margin-left: 0.8em; display: inline-flex; align-items: center; background: transparent !important; text-shadow: none !important; }',
         '.' + CLASS_QUALITY + ' span { white-space: nowrap; }',
         '.' + CLASS_QUALITY + ' .q_4k_text     { color: #50c878; }',
         '.' + CLASS_QUALITY + ' .q_1080_text   { color: #007bff; }',
@@ -59,9 +45,7 @@
     ].join('\n');
     document.head.appendChild(style);
 
-    // ────────────────────────────────────────────────
-    //  Логіка парсингу якості та стилів — без змін
-    // ────────────────────────────────────────────────
+    // parseQualityFromText та getQualityStyle — без змін (встав сюди свої функції)
     function parseQualityFromText(text) {
         if (!text) return 0;
         var t = text.toLowerCase();
@@ -86,14 +70,11 @@
         return { text: '??', css: 'q_sd_text' };
     }
 
-    // ────────────────────────────────────────────────
-    //  fetchWithProxy, searchUaDual — без змін
-    // ────────────────────────────────────────────────
-    // ... (копіюй сюди функції fetchWithProxy та searchUaDual з твого оригінального коду)
+    // fetchWithProxy — встав сюди свою функцію (без змін)
 
-    // ────────────────────────────────────────────────
-    //  UI — змінені класи
-    // ────────────────────────────────────────────────
+    // searchUaDual — встав сюди свою функцію (без змін)
+
+    // createHtml та injectUI
     function createHtml(item) {
         var meta = getQualityStyle(item.val);
         return '<span class="' + meta.css + '">' + meta.text + '</span>';
@@ -136,9 +117,7 @@
         });
     }
 
-    // ────────────────────────────────────────────────
-    //  INIT — змінено назву прапорця
-    // ────────────────────────────────────────────────
+    // INIT
     function init() {
         if (window[GLOBAL_FLAG_NAME]) return;
         window[GLOBAL_FLAG_NAME] = true;

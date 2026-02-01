@@ -71,8 +71,73 @@
     }
 
     // fetchWithProxy — встав сюди свою функцію (без змін)
+function fetchWithProxy(url, callback) {
+        var currentProxy = 0;
+        var called = false;
 
+        function tryNext() {
+            if (currentProxy >= PROXY_LIST.length) {
+                if (!called) { called = true; callback(new Error('Fail')); }
+                return;
+            }
+            var pUrl = PROXY_LIST[currentProxy] + encodeURIComponent(url);
+            var controller = new AbortController();
+            var tid = setTimeout(function() { controller.abort(); }, PROXY_TIMEOUT);
+
+            fetch(pUrl, { signal: controller.signal }).then(function(r) { return r.text(); }).then(function(d) {
+                clearTimeout(tid);
+                if (!called) { called = true; callback(null, d); }
+            }).catch(function() {
+                clearTimeout(tid);
+                currentProxy++;
+                tryNext();
+            });
+        }
+        fetch(url).then(function(r) { return r.text(); }).then(function(d) {
+            if (!called) { called = true; callback(null, d); }
+        }).catch(function() { tryNext(); });
+}
     // searchUaDual — встав сюди свою функцію (без змін)
+    function searchUaDual(card, callback) {
+        var year = (card.release_date || '').substring(0, 4);
+        var title = card.original_title || card.title;
+        if (!title || !year) return callback(null);
+
+        var url = JACRED_PROTOCOL + JACRED_URL + '/api/v1.0/torrents?search=' + encodeURIComponent(title) + '&year=' + year;
+
+        fetchWithProxy(url, function(err, data) {
+            if (err || !data) return callback(null);
+            try {
+                var json = JSON.parse(data);
+                if (!Array.isArray(json)) return callback(null);
+
+                var uaRegex = /(?:^|[\s\.\-\/\(\[])(ukr|ua|ukrainian|укр|україн|toloka|mazepa|hurtom|uafilm|бабай|гуртом)(?:$|[\s\.\-\/\)\]])/i;
+                var uaList = [];
+
+                json.forEach(function(item) {
+                    var fullInfo = (item.title + " " + (item.details || "") + " " + (item.tracker || "")).toLowerCase();
+                    if (uaRegex.test(fullInfo)) {
+                        uaList.push({
+                            val: parseQualityFromText(item.title),
+                            seeds: parseInt(item.seeders || item.seeds || 0),
+                            title: item.title
+                        });
+                    }
+                });
+
+                if (uaList.length > 0) {
+                    // Знаходимо найкращу якість
+                    var bestQual = uaList.slice().sort(function(a,b){ return b.val - a.val; })[0];
+                    // Знаходимо за сидами
+                    var mostPop = uaList.slice().sort(function(a,b){ return b.seeds - a.seeds; })[0];
+
+                    callback({ best: bestQual, popular: mostPop, hasUa: true });
+                } else {
+                    callback({ hasUa: false });
+                }
+            } catch(e) { callback(null); }
+        });
+    }
 
     // createHtml та injectUI
     function createHtml(item) {

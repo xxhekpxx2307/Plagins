@@ -44,8 +44,9 @@
         '.' + CLASS_QUALITY + ' .seeds_info    { margin-left:3px; font-size:0.8em; opacity:0.8; font-weight:normal; color:#fff; }'
     ].join('\n');
     document.head.appendChild(style);
+}
 
-    // parseQualityFromText та getQualityStyle — без змін (встав сюди свої функції)
+     // parseQualityFromText та getQualityStyle — без змін (встав сюди свої функції)
     function parseQualityFromText(text) {
         if (!text) return 0;
         var t = text.toLowerCase();
